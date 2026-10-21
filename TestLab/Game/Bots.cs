@@ -27,6 +27,8 @@ internal static class Bots
         public IntPtr SetUpFor; // Spieler-Objekt, für das Name und Farbe schon gesetzt sind
         public float RetryAt;
         public int Failures;
+        public float SetUpAt;
+        public bool WarnedIncomplete;
     }
 
     private static readonly List<Bot> List = new();
@@ -154,6 +156,11 @@ internal static class Bots
             if (character != null && character.Data != null)
             {
                 if (bot.SetUpFor != character.Pointer) SetUp(bot, character);
+                else if (!bot.WarnedIncomplete && character.Data.IsIncomplete && Time.unscaledTime - bot.SetUpAt > 5f)
+                {
+                    bot.WarnedIncomplete = true;
+                    TestLabPlugin.Logger.LogWarning($"{bot.Name}: Spielerdaten unvollständig – das Spiel könnte die Verbindung trennen.");
+                }
                 continue;
             }
 
@@ -206,9 +213,20 @@ internal static class Bots
     private static void SetUp(Bot bot, PlayerControl character)
     {
         bot.SetUpFor = character.Pointer;
+        bot.SetUpAt = Time.unscaledTime;
+        bot.WarnedIncomplete = false;
         bot.Failures = 0;
         character.RpcSetName(bot.Name);
         character.CheckColor(bot.Color); // nimmt die nächste freie Farbe, falls vergeben (wie bei echten Spielern)
+        // Echte Spieler schicken Kosmetik und Level selbst. Fehlt etwas davon, gelten ihre Spielerdaten als
+        // unvollständig und das Spiel trennt nach ~30 s die Verbindung des Hosts („Timeout while waiting for other
+        // player data“ in PlayerControl.ClientInitialize).
+        character.RpcSetLevel(0);
+        character.RpcSetHat("hat_NoHat");
+        character.RpcSetSkin("skin_None");
+        character.RpcSetVisor("visor_EmptyVisor");
+        character.RpcSetPet("pet_EmptyPet");
+        character.RpcSetNamePlate("nameplate_NoPlate");
         TestLabPlugin.Logger.LogInfo($"{bot.Name} ist in der Lobby (Client {bot.ClientId}, Spieler {character.PlayerId}).");
     }
 

@@ -54,3 +54,10 @@ internal static class ExitGamePatch
         Bots.Clear();
     }
 }
+
+/// <summary>Klicks auf das TestLab-Fenster nicht auch an die Spiel-Knöpfe darunter geben.</summary>
+[HarmonyPatch(typeof(PassiveButtonManager), nameof(PassiveButtonManager.Update))]
+internal static class ClickThroughPatch
+{
+    public static bool Prefix() => !Ui.TestLabWindow.MouseOverWindow;
+}

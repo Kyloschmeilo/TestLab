@@ -48,10 +48,16 @@ internal static class ModInfo
     {
         if (_resolved) return;
         _resolved = true;
-        var state = AccessTools.TypeByName("SpecialRoles.Game.RoleState");
-        var catalog = AccessTools.TypeByName("SpecialRoles.Core.RoleCatalog");
-        var modifier = AccessTools.TypeByName("SpecialRoles.Core.Modifier");
-        if (state == null || catalog == null) return;
+        var assembly = CompatGuard.FindAssembly("SpecialRoles");
+        if (assembly == null) return;
+        var state = assembly.GetType("SpecialRoles.Game.RoleState");
+        var catalog = assembly.GetType("SpecialRoles.Core.RoleCatalog");
+        var modifier = assembly.GetType("SpecialRoles.Core.Modifier");
+        if (state == null || catalog == null)
+        {
+            TestLabPlugin.Logger.LogWarning("SpecialRoles gefunden, aber RoleState/RoleCatalog fehlen (umbenannt?).");
+            return;
+        }
         _roleOf = AccessTools.Method(state, "Get", new[] { typeof(byte) });
         _catalogGet = AccessTools.Method(catalog, "Get");
         if (modifier != null && Enum.IsDefined(modifier, "Flash"))

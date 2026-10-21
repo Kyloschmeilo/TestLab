@@ -42,6 +42,7 @@ public class TestLabWindow : MonoBehaviour
 
     private GUI.WindowFunction? _draw;
     private Rect _rect = new(0f, 0f, Width, 10f);
+    private static Rect _shown; // zuletzt gezeichnetes Fenster in Bildschirm-Pixeln (leer = keins)
     private Vector2 _scroll;
     private bool _guiErrorLogged;
 
@@ -93,9 +94,24 @@ public class TestLabWindow : MonoBehaviour
         _rows = rows;
     }
 
+    /// <summary>Maus über dem Fenster: dann bekommt das Spiel den Klick nicht (siehe ClickThroughPatch).</summary>
+    public static bool MouseOverWindow
+    {
+        get
+        {
+            if (_shown.width <= 0f) return false;
+            var mouse = Input.mousePosition;
+            return _shown.Contains(new Vector2(mouse.x, Screen.height - mouse.y));
+        }
+    }
+
     private void OnGUI()
     {
-        if (!_active) return;
+        if (!_active)
+        {
+            _shown = default;
+            return;
+        }
         try
         {
             var scale = Mathf.Max(1f, Screen.height / 1080f);
@@ -103,13 +119,18 @@ public class TestLabWindow : MonoBehaviour
             var screenWidth = Screen.width / scale;
             if (!Settings.ShowWindow.Value)
             {
+                _shown = default;
                 GUI.Label(new Rect(screenWidth - 260f, 8f, 120f, 24f), "TestLab: F1");
                 return;
             }
             _draw ??= (Action<int>)Draw;
-            // rechts, aber neben den Spiel-Knöpfen am Rand (Klicks gehen durch das Fenster auch ans Spiel)
-            _rect = new Rect(screenWidth - Width - 120f, 120f, Width, 10f);
-            GUILayout.Window(WindowId, _rect, _draw, $"TestLab {TestLabPlugin.Version}", Options(GUILayout.Width(Width)));
+            // rechts, aber neben den Spiel-Knöpfen am Rand; dunkler Hintergrund (das Fenster selbst ist fast durchsichtig)
+            var at = new Rect(screenWidth - Width - 120f, 120f, Width, Mathf.Max(_rect.height, 10f));
+            GUI.Box(at, "");
+            GUI.Box(at, "");
+            _rect = GUILayout.Window(WindowId, new Rect(at.x, at.y, Width, 10f), _draw, $"TestLab {TestLabPlugin.Version}",
+                Options(GUILayout.Width(Width)));
+            _shown = new Rect(_rect.x * scale, _rect.y * scale, _rect.width * scale, _rect.height * scale);
         }
         catch (Exception exc)
         {

@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using HarmonyLib;
 
 namespace TestLab.Game;
@@ -11,12 +13,12 @@ internal static class CompatGuard
 {
     public const string CrewStatsId = "de.amongusmanager.crewstats";
 
-    private static readonly string[] CrewStatsMethods =
+    private static readonly (string Type, string Method)[] CrewStatsMethods =
     {
-        "CrewStats.GameRecorder:OnGameStart", // Aufzeichnung starten
-        "CrewStats.SettingsReporter:OnGameStart", // Lobby-Einstellungen senden
-        "CrewStats.AutoMute:Send", // Discord muten
-        "CrewStats.RoundUploader:SaveAndSend", // Runde senden (zur Sicherheit, falls doch aufgezeichnet)
+        ("CrewStats.GameRecorder", "OnGameStart"), // Aufzeichnung starten
+        ("CrewStats.SettingsReporter", "OnGameStart"), // Lobby-Einstellungen senden
+        ("CrewStats.AutoMute", "Send"), // Discord muten
+        ("CrewStats.RoundUploader", "SaveAndSend"), // Runde senden (zur Sicherheit, falls doch aufgezeichnet)
     };
 
     private static bool _loggedBlock;
@@ -30,16 +32,18 @@ internal static class CompatGuard
 
     public static void Apply(Harmony harmony)
     {
-        if (AccessTools.TypeByName("CrewStats.GameRecorder") == null) return; // CrewStats nicht installiert
+        var assembly = FindAssembly("CrewStats");
+        if (assembly == null) return; // CrewStats nicht installiert
         CrewStatsLoaded = true;
 
         var patched = 0;
-        foreach (var name in CrewStatsMethods)
+        foreach (var (typeName, methodName) in CrewStatsMethods)
         {
-            var method = AccessTools.Method(name);
+            var type = assembly.GetType(typeName);
+            var method = type == null ? null : AccessTools.Method(type, methodName);
             if (method == null)
             {
-                TestLabPlugin.Logger.LogWarning($"CrewStats-Schutz: {name} nicht gefunden.");
+                TestLabPlugin.Logger.LogWarning($"CrewStats-Schutz: {typeName}.{methodName} nicht gefunden.");
                 continue;
             }
             harmony.Patch(method, prefix: new HarmonyMethod(typeof(CompatGuard), nameof(Prefix)));
@@ -49,6 +53,13 @@ internal static class CompatGuard
             Warning = $"CrewStats-Schutz unvollständig ({patched}/{CrewStatsMethods.Length}) – Testrunden könnten an Discord gehen!";
         TestLabPlugin.Logger.LogInfo($"CrewStats gefunden: {patched}/{CrewStatsMethods.Length} Stellen für Testrunden abgeschaltet.");
     }
+
+    /// <summary>
+    /// Eine geladene Mod-DLL. Nicht über AccessTools.TypeByName: das durchsucht alle Assemblies und füllt das Log mit
+    /// Warnungen über Spiel-Typen, die sich nicht laden lassen.
+    /// </summary>
+    internal static System.Reflection.Assembly? FindAssembly(string name) =>
+        AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == name);
 
     // false = CrewStats-Methode überspringen
     private static bool Prefix()
