@@ -47,8 +47,9 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   `TESTLAB_MOD_DLL` (geht in der Cloud mit portablem pwsh, `Read-Host` per Funktion überschreiben).
 
 ## Stand / offen
-- 0.1.0 (21.10.2026): Bots, Steuern, Abstimmen, Fenster, CrewStats-Schutz. Gegen die Spiel-DLLs kompiliert, Logik-Tests
-  und Installer-Test grün. **Noch nie im Spiel gelaufen** – nächster Schritt: Kilian testet lokal (Lobby → Bots → Start →
+- 0.1.0 (21.10.2026, Pre-Release auf GitHub, auf Kilians Wunsch auch direkt in sein `BepInEx/plugins` gelegt): Bots,
+  Steuern, Abstimmen, Fenster, CrewStats-Schutz. Gegen die Spiel-DLLs kompiliert, Logik-Tests und Installer-Test grün.
+  **Noch nie im Spiel gelaufen** – nächster Schritt: Kilian testet lokal (Lobby → Bots → Start →
   Steuern → Meeting → Rundenende → Bots wieder in der Lobby).
 - Unsicher bis zum ersten Test: ob die Bots nach der Runde zurückkommen, ob `Role.Initialize` beim Wechsel alle Knöpfe
   richtig setzt (Engineer-Vent, Shapeshifter …), Aufgaben der Bots beim Steuern.
