@@ -1,0 +1,61 @@
+# Neues Release (nur wenn Kilian es will):
+#   1. Version in TestLab/TestLab.csproj erhöhen, Notizen in release-notes/v<Version>.md, committen + pushen
+#   2. Actions → „Release“ → „Run workflow“
+# Baut die DLL und hängt TestLab.dll + Installer ans Release. Gibt es das Release schon, wird nur der
+# Installer ersetzt und die Notizen aktualisiert (die DLL bleibt, wie sie veröffentlicht wurde).
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Version und Notizen prüfen
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' TestLab/TestLab.csproj | head -1)
+          echo "Version: $VERSION"
+          test -n "$VERSION"
+          test -f "release-notes/v$VERSION.md" || { echo "::error::release-notes/v$VERSION.md fehlt"; exit 1; }
+          EXISTS=false
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION gibt es schon – nur Installer und Notizen werden ersetzt"
+            EXISTS=true
+          fi
+          echo "exists=$EXISTS" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Installer am bestehenden Release ersetzen
+        if: steps.version.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release upload "v$VERSION" installer/TestLab-Installer.bat --clobber
+          gh release edit "v$VERSION" --notes-file "release-notes/v$VERSION.md"
+      - name: Tests
+        if: steps.version.outputs.exists != 'true'
+        run: dotnet test Tests
+      - name: DLL bauen
+        if: steps.version.outputs.exists != 'true'
+        run: dotnet build TestLab -c Release -p:AmongUs=/nicht-kopieren
+      - name: Release erstellen
+        if: steps.version.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          PRE=""
+          case "$VERSION" in 0.*) PRE="--prerelease";; esac
+          gh release create "v$VERSION" TestLab/bin/Release/net6.0/TestLab.dll installer/TestLab-Installer.bat \
+            --target "$GITHUB_SHA" --title "TestLab $VERSION" --notes-file "release-notes/v$VERSION.md" $PRE
