@@ -78,10 +78,17 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Hintergrund: `GUILayout.BeginVertical(GUIContent, style)` um den ganzen Inhalt, `style.normal.background` = eigene
   1×1-Textur (`HideAndDontSave`). Ein `GUI.Box` vor dem Fenster blieb unsichtbar (vermutlich, weil `GUILayout.Window`
   im Layout-Durchgang nur die übergebene Höhe zurückgibt – der Kasten wäre dann 10 px hoch).
-- **0.1.3** (22.10.2026, gebaut, **noch nicht im Spiel getestet**): „Rolle ändern …“ im Fenster (Kilians Wunsch:
-  „meine Rolle mitten im Test changen“). Reflection gegen SpecialRoles-Core offline geprüft (Assignment/RoleSync bauen,
-  Apply, Encode/Decode). Unklar bis zum Test: ob `RoleManager.SetRole` mitten in der Runde alle Knöpfe richtig setzt
-  (Crew ↔ Impostor: Kill/Sabotage/Vent, Aufgabenliste „Fake Tasks“), Namensfarben der Impostor (setzt das Spiel im Intro).
+- **0.1.3** (22.10.2026 im Spiel bestätigt, nicht released): „Rolle ändern …“ im Fenster (Kilians Wunsch: „meine Rolle
+  mitten im Test changen“). Geklappt: Phantom → Engineer (Vent, Hinweis), → Impostor (Kill/Sabotage/Vent, Name rot),
+  → Sheriff und Putzkraft (SpecialRoles-Text, Namensschild, Knopf), Flash an. Bekannte Schönheitsfehler – Kilian:
+  „scheiß auf die Kleinigkeiten“, daher nicht behoben: (1) Impostor-Kopf „Sabotage and kill everyone / Fake Tasks“
+  bleibt nach dem Wechsel zur Crew stehen (`ImpostorRole.Deinitialize` sucht den `ImportantTextTask` unter dem Namen
+  „ImpostorRole“, `PlayerTask.GetOrCreateTask` nennt ihn anders) → wäre: `ImportantTextTask`s aus `myTasks` entfernen,
+  danach `Role.SpawnTaskHeader(player)`; (2) Namensfarben bleiben wie beim Rundenstart → `PlayerNameColor.Set(pc)` für
+  alle (macht das Spiel in `CoSetRole`), auch beim Steuern; (3) SpecialRoles-Knöpfe (Sheriff, Putzkraft) heißen „KILL“
+  statt „Schießen“/„Putzen“ – vermutlich setzt der `TextTranslatorTMP` des Kill-Knopf-Klons die Beschriftung zurück
+  (Fix in SpecialRoles `RoleButton.Create`: Übersetzer abschalten/zerstören vor `OverrideText`), ungeprüft, ob das auch
+  in normalen Runden passiert.
 - Computer-Steuerung: Among Us über Steam starten (Bibliothek → Spielen), **nicht** per `open_application` auf die
   `Among Us.exe` – das startet eine zweite Instanz („Another instance is already running“). Logs:
   `BepInEx/LogOutput.log` und `%USERPROFILE%\AppData\LocalLow\Innersloth\Among Us\Player.log` (Unity-Log mit den
