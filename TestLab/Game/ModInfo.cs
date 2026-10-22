@@ -25,22 +25,21 @@ internal static class ModInfo
         }
     }
 
-    /// <summary>„Sheriff“, „Sheriff + Flash“ oder leer.</summary>
-    public static string SpecialRole(byte playerId)
+    /// <summary>SpecialRoles-Rolle („Sheriff“, leer = keine) und ob der Spieler den Modifikator Flash hat.</summary>
+    public static (string Role, bool Flash) SpecialRole(byte playerId)
     {
-        if (!SpecialRolesLoaded) return "";
+        if (!SpecialRolesLoaded) return ("", false);
         try
         {
             var role = _roleOf!.Invoke(null, new object[] { playerId });
             var info = role == null ? null : _catalogGet!.Invoke(null, new[] { role });
             var name = info?.GetType().GetProperty("Name")?.GetValue(info) as string ?? "";
-            if (_hasModifier != null && _flash != null && _hasModifier.Invoke(null, new[] { playerId, _flash }) is true)
-                name = name.Length == 0 ? "Flash" : name + " + Flash";
-            return name;
+            var flash = _hasModifier != null && _flash != null && _hasModifier.Invoke(null, new[] { playerId, _flash }) is true;
+            return (name, flash);
         }
         catch (Exception)
         {
-            return "?";
+            return ("?", false);
         }
     }
 

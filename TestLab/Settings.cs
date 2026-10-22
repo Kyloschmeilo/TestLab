@@ -16,6 +16,7 @@ internal static class Settings
     public static ConfigEntry<bool> NoAutoEnd { get; private set; } = null!;
     public static ConfigEntry<bool> BlockCrewStats { get; private set; } = null!;
     public static ConfigEntry<bool> ShowWindow { get; private set; } = null!;
+    public static ConfigEntry<bool> WindowLeft { get; private set; } = null!;
 
     public static void Bind(ConfigFile config)
     {
@@ -34,5 +35,7 @@ internal static class Settings
             "Mit Bots: CrewStats zeichnet nichts auf und schickt nichts an Discord (keine XP, kein Auto-Mute, keine Statistik).");
         ShowWindow = config.Bind("Fenster", "Anzeigen", true,
             "TestLab-Fenster in lokalen Spielen zeigen (F1 blendet es ein und aus).");
+        WindowLeft = config.Bind("Fenster", "Links", false,
+            "Fenster links statt rechts zeigen (im Fenster mit ◀/▶ umschaltbar).");
     }
 }

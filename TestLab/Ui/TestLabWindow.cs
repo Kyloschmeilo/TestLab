@@ -10,7 +10,7 @@ using UnityEngine;
 namespace TestLab.Ui;
 
 /// <summary>
-/// Das TestLab-Fenster (IMGUI, rechts oben) und die Tasten. Nur GUI-/GUILayout-Funktionen, die Among Us selbst
+/// Das TestLab-Fenster (IMGUI, rechts oder links oben) und die Tasten. Nur GUI-/GUILayout-Funktionen, die Among Us selbst
 /// enthält – der Rest ist im Spiel weggekürzt (es gibt z.B. kein TextField, keinen Slider und kein DragWindow).
 /// Spielzustand wird in Update eingesammelt und Klicks erst im nächsten Update ausgeführt, damit sich zwischen
 /// Layout- und Zeichen-Durchgang von OnGUI nichts ändert.
@@ -25,12 +25,13 @@ public class TestLabWindow : MonoBehaviour
         bool Controlled);
 
     private const int WindowId = 0x7E57AB;
-    private const float Width = 460f;
+    private const float Width = 540f;
 
     private static readonly Color Red = new(1f, 0.45f, 0.45f);
     private static readonly Color Green = new(0.55f, 1f, 0.55f);
     private static readonly Color Yellow = new(1f, 0.9f, 0.4f);
     private static readonly Color Gray = new(0.65f, 0.65f, 0.65f);
+    private static readonly Color Backdrop = new(0.07f, 0.07f, 0.09f, 0.94f);
 
     private readonly Queue<Action> _clicks = new();
     private List<Row> _rows = new();
@@ -45,6 +46,9 @@ public class TestLabWindow : MonoBehaviour
     private static Rect _shown; // zuletzt gezeichnetes Fenster in Bildschirm-Pixeln (leer = keins)
     private Vector2 _scroll;
     private bool _guiErrorLogged;
+    private GUIStyle? _backdrop; // einfarbiger Hintergrund (die Fenster-Grafik des Spiels ist fast durchsichtig)
+    private GUIStyle? _noWrap; // Rollen nicht umbrechen, sonst wird die Zeile doppelt hoch
+    private GUIContent? _empty;
 
     private void Update()
     {
@@ -83,8 +87,11 @@ public class TestLabWindow : MonoBehaviour
                 if (_game)
                 {
                     role = RoleName(data.RoleType);
-                    var special = ModInfo.SpecialRole(player.PlayerId);
-                    if (special.Length > 0) role += " · " + special;
+                    var (special, flash) = ModInfo.SpecialRole(player.PlayerId);
+                    // „Crewmate · Sheriff“ → „Sheriff“; Spiel-Rollen mit eigener Fähigkeit bleiben stehen
+                    if (special.Length > 0)
+                        role = data.RoleType is RoleTypes.Crewmate or RoleTypes.Impostor ? special : role + " · " + special;
+                    if (flash) role += " + Flash";
                 }
                 rows.Add(new Row(player.PlayerId, data.PlayerName ?? "?", PlayerColor(data.DefaultOutfit.ColorId), role,
                     _game && RoleManager.IsImpostorRole(data.RoleType), data.IsDead, Bots.IsBot(player), Control.IsOwn(player),
@@ -124,10 +131,21 @@ public class TestLabWindow : MonoBehaviour
                 return;
             }
             _draw ??= (Action<int>)Draw;
-            // rechts, aber neben den Spiel-Knöpfen am Rand; dunkler Hintergrund (das Fenster selbst ist fast durchsichtig)
-            var at = new Rect(screenWidth - Width - 120f, 120f, Width, Mathf.Max(_rect.height, 10f));
-            GUI.Box(at, "");
-            GUI.Box(at, "");
+            _noWrap ??= new GUIStyle(GUI.skin.label) { wordWrap = false };
+            _empty ??= new GUIContent("");
+            if (_backdrop == null)
+            {
+                _backdrop = new GUIStyle();
+                _backdrop.normal.background = Texture2D.whiteTexture; // eingefärbt über GUI.backgroundColor
+            }
+            // rechts neben den Spiel-Knöpfen am Rand oder links; Fenster werden nach allem anderen gezeichnet,
+            // der Hintergrund liegt also darunter
+            var x = Settings.WindowLeft.Value ? 20f : screenWidth - Width - 120f;
+            var at = new Rect(x, 120f, Width, Mathf.Max(_rect.height, 10f));
+            var background = GUI.backgroundColor;
+            GUI.backgroundColor = Backdrop;
+            GUI.Box(at, _empty, _backdrop);
+            GUI.backgroundColor = background;
             _rect = GUILayout.Window(WindowId, new Rect(at.x, at.y, Width, 10f), _draw, $"TestLab {TestLabPlugin.Version}",
                 Options(GUILayout.Width(Width)));
             _shown = new Rect(_rect.x * scale, _rect.y * scale, _rect.width * scale, _rect.height * scale);
@@ -159,7 +177,12 @@ public class TestLabWindow : MonoBehaviour
         if (CompatGuard.Warning.Length > 0) ColoredLabel(CompatGuard.Warning, Red);
         var status = $"Lokales Spiel · {_rows.Count} Spieler · {Bots.Count} Bots";
         if (CompatGuard.Blocking) status += " · CrewStats sendet nichts";
+        GUILayout.BeginHorizontal(Options());
         Label(status);
+        GUILayout.FlexibleSpace();
+        var left = Settings.WindowLeft.Value;
+        if (Button(left ? "▶" : "◀", 28f)) _clicks.Enqueue(() => Settings.WindowLeft.Value = !left);
+        GUILayout.EndHorizontal();
 
         if (_lobby) DrawLobby();
         else if (_game) DrawGame();
@@ -222,8 +245,8 @@ public class TestLabWindow : MonoBehaviour
             GUILayout.BeginHorizontal(Options());
             ColoredLabel("●", row.Color, 16f);
             var name = (row.Controlled ? "▶ " : "") + row.Name + (row.IsOwn ? " (du)" : "") + (row.Dead ? " †" : "");
-            ColoredLabel(name, row.Dead ? Gray : Color.white, 120f);
-            ColoredLabel(row.Role, row.Impostor ? Red : Gray, 135f);
+            ColoredLabel(name, row.Dead ? Gray : Color.white, 115f, _noWrap);
+            ColoredLabel(row.Role, row.Impostor ? Red : Gray, 165f, _noWrap);
             var id = row.Id;
             if (_game && !_meeting)
             {
@@ -267,11 +290,13 @@ public class TestLabWindow : MonoBehaviour
 
     private static void Label(string text) => GUILayout.Label(text, Options());
 
-    private static void ColoredLabel(string text, Color color, float width = 0f)
+    private static void ColoredLabel(string text, Color color, float width = 0f, GUIStyle? style = null)
     {
         var before = GUI.contentColor;
         GUI.contentColor = color;
-        GUILayout.Label(text, width > 0f ? Options(GUILayout.Width(width)) : Options());
+        var options = width > 0f ? Options(GUILayout.Width(width)) : Options();
+        if (style != null) GUILayout.Label(text, style, options);
+        else GUILayout.Label(text, options);
         GUI.contentColor = before;
     }
 
