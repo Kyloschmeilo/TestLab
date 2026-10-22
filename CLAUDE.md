@@ -35,7 +35,7 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   weggekürzt**: vorhanden sind u.a. `GUILayout.Label/Button/Toggle/Space/BeginHorizontal/BeginVertical/BeginScrollView/
   Window/Width/Height`, `GUI.Label/Box/contentColor/matrix`; es fehlen z.B. `TextField`, Slider, `GUI.DragWindow`,
   `GUIStyle.richText`, `GUIStyle.onNormal` (vorhanden: `new GUIStyle(GUI.skin.label)`, `wordWrap`, `normal.background`,
-  `Texture2D.whiteTexture`, `GUI.backgroundColor`). Vor neuen GUI-Aufrufen im Cpp2IL-ISIL-Dump prüfen. Zustand in
+  `new Texture2D(1, 1)` + `SetPixel`/`Apply`, `Event.current.type`). Vor neuen GUI-Aufrufen im Cpp2IL-ISIL-Dump prüfen. Zustand in
   `Update` sammeln, Klicks im nächsten `Update` ausführen (sonst Layout-Fehler zwischen Layout- und Repaint-Durchgang). Klicks gehen sonst auch an die
   Spiel-Knöpfe darunter → `ClickThroughPatch` (`PassiveButtonManager.Update` aussetzen, solange die Maus über dem Fenster ist).
 - Andere Mods per `CompatGuard.FindAssembly(name).GetType(…)` suchen, **nicht** `AccessTools.TypeByName`/`Method("Typ:Name")`
@@ -65,14 +65,17 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   kommen nach der Runde zurück, zweite Runde startet (SpecialRoles verteilt neu, z.B. Nachtsicht + Flash).
   **Im lokalen Spiel schließt das Meeting-Ergebnis nicht von selbst** – das Spiel wartet, bis der Host auf „Proceed“
   klickt (`MeetingHud.Update`: Auto-Weiter nur online). Kein TestLab-Fehler.
-- **0.1.2** (nur gebaut, noch nicht im Spiel): Fenster breiter (540, „Töten“ war abgeschnitten), einfarbiger dunkler
-  Hintergrund (`GUIStyle` mit `Texture2D.whiteTexture`, eingefärbt über `GUI.backgroundColor` – die Fenster-Grafik des
-  Spiels ist fast durchsichtig), Rollen ohne Umbruch und kürzer („Sheriff“ statt „Crewmate · Sheriff“), Knopf ◀/▶
-  schiebt das Fenster nach links/rechts (Config `[Fenster] Links`; rechts verdeckt es in der Lobby die Lobby-Infos).
+- **0.1.2** (22.10.2026 im Spiel bestätigt, nicht released): Fenster breiter (540, „Töten“ war abgeschnitten), dunkler
+  Hintergrund, Rollen ohne Umbruch und kürzer („Sheriff“ statt „Crewmate · Sheriff“), Knopf ◀/▶ schiebt das Fenster
+  nach links/rechts (Config `[Fenster] Links`; rechts verdeckt es in der Lobby die Lobby-Infos, links im Spiel die
+  Aufgabenliste). F6 „Bots holen“ und „Impostor gewinnen“ funktionieren auch.
+  Hintergrund: `GUILayout.BeginVertical(GUIContent, style)` um den ganzen Inhalt, `style.normal.background` = eigene
+  1×1-Textur (`HideAndDontSave`). Ein `GUI.Box` vor dem Fenster blieb unsichtbar (vermutlich, weil `GUILayout.Window`
+  im Layout-Durchgang nur die übergebene Höhe zurückgibt – der Kasten wäre dann 10 px hoch).
 - Computer-Steuerung: Among Us über Steam starten (Bibliothek → Spielen), **nicht** per `open_application` auf die
   `Among Us.exe` – das startet eine zweite Instanz („Another instance is already running“). Logs:
   `BepInEx/LogOutput.log` und `%USERPROFILE%\AppData\LocalLow\Innersloth\Among Us\Player.log` (Unity-Log mit den
   Trennungsgründen). Die neue DLL lässt sich nur bei geschlossenem Spiel ersetzen.
-- Noch nicht getestet: Nachtsicht bei Licht-Sabotage, Flash-Tempo, Holen aller Bots (F6), „Impostor gewinnen“,
-  Abstimmung „Zufall“, Aufgaben der Bots beim Steuern.
+- Noch nicht getestet: Flash-Tempo (Nachtsicht bei Licht-Sabotage klappt), Abstimmung „Zufall“, Aufgaben der Bots beim
+  Steuern.
 - Ideen: Bots laufen lassen (Wegpunkte), Aufgaben per Knopf erledigen, Rollen vor dem Start festlegen (nur lokal!).

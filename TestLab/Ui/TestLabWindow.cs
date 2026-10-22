@@ -42,7 +42,6 @@ public class TestLabWindow : MonoBehaviour
     private string _controlled = "";
 
     private GUI.WindowFunction? _draw;
-    private Rect _rect = new(0f, 0f, Width, 10f);
     private static Rect _shown; // zuletzt gezeichnetes Fenster in Bildschirm-Pixeln (leer = keins)
     private Vector2 _scroll;
     private bool _guiErrorLogged;
@@ -135,20 +134,20 @@ public class TestLabWindow : MonoBehaviour
             _empty ??= new GUIContent("");
             if (_backdrop == null)
             {
+                // eigene Textur; HideAndDontSave, damit das Spiel sie beim Szenenwechsel nicht entlädt
+                var texture = new Texture2D(1, 1) { hideFlags = HideFlags.HideAndDontSave };
+                texture.SetPixel(0, 0, Backdrop);
+                texture.Apply();
                 _backdrop = new GUIStyle();
-                _backdrop.normal.background = Texture2D.whiteTexture; // eingefärbt über GUI.backgroundColor
+                _backdrop.normal.background = texture;
             }
-            // rechts neben den Spiel-Knöpfen am Rand oder links; Fenster werden nach allem anderen gezeichnet,
-            // der Hintergrund liegt also darunter
+            // rechts neben den Spiel-Knöpfen am Rand oder links
             var x = Settings.WindowLeft.Value ? 20f : screenWidth - Width - 120f;
-            var at = new Rect(x, 120f, Width, Mathf.Max(_rect.height, 10f));
-            var background = GUI.backgroundColor;
-            GUI.backgroundColor = Backdrop;
-            GUI.Box(at, _empty, _backdrop);
-            GUI.backgroundColor = background;
-            _rect = GUILayout.Window(WindowId, new Rect(at.x, at.y, Width, 10f), _draw, $"TestLab {TestLabPlugin.Version}",
+            var rect = GUILayout.Window(WindowId, new Rect(x, 120f, Width, 10f), _draw, $"TestLab {TestLabPlugin.Version}",
                 Options(GUILayout.Width(Width)));
-            _shown = new Rect(_rect.x * scale, _rect.y * scale, _rect.width * scale, _rect.height * scale);
+            // nur der Zeichen-Durchgang kennt die echte Höhe (im Layout-Durchgang kommt die übergebene zurück)
+            if (Event.current.type == EventType.Repaint)
+                _shown = new Rect(rect.x * scale, rect.y * scale, rect.width * scale, rect.height * scale);
         }
         catch (Exception exc)
         {
@@ -174,6 +173,9 @@ public class TestLabWindow : MonoBehaviour
 
     private void DrawContent()
     {
+        // Hintergrund als Gruppe um den ganzen Inhalt: hat von selbst die richtige Größe
+        GUILayout.BeginVertical(_empty!, _backdrop!, Options());
+
         if (CompatGuard.Warning.Length > 0) ColoredLabel(CompatGuard.Warning, Red);
         var status = $"Lokales Spiel · {_rows.Count} Spieler · {Bots.Count} Bots";
         if (CompatGuard.Blocking) status += " · CrewStats sendet nichts";
@@ -192,6 +194,7 @@ public class TestLabWindow : MonoBehaviour
 
         ColoredLabel("F1 Fenster · F2 nächster Spieler · F3 zu mir · F5 Bot · F6 Bots holen", Gray);
         if (Time.unscaledTime < Notice.Until) ColoredLabel(Notice.Text, Yellow);
+        GUILayout.EndVertical();
     }
 
     private void DrawLobby()
