@@ -47,7 +47,6 @@ internal static class Control
         if (target == old) return;
 
         var client = AmongUsClient.Instance;
-        var hud = HudManager.Instance;
         if (_ownClientId < 0)
         {
             _ownClientId = client.ClientId;
@@ -85,23 +84,29 @@ internal static class Control
             if (target.MyPhysics.inputHandler != null) target.MyPhysics.inputHandler.enabled = true;
         });
 
-        Safe.Run("Knöpfe", () =>
-        {
-            HideExtraKillButtons(hud);
-            var role = target.Data.Role;
-            if (role != null)
-            {
-                role.Initialize(target); // Kill-/Fähigkeits-Knöpfe der neuen Rolle (setzt auch den Kill-Cooldown)
-                target.SetKillTimer(killTimer);
-            }
-            else
-            {
-                hud.SetHudActive(true);
-            }
-            if (hud.ShadowQuad != null) hud.ShadowQuad.gameObject.SetActive(!target.Data.IsDead);
-        });
+        Safe.Run("Knöpfe", () => RefreshButtons(target, killTimer));
 
         Notice.Show($"Du steuerst jetzt {target.Data.PlayerName}.");
+    }
+
+    /// <summary>Knöpfe passend zur Rolle des gesteuerten Spielers (nach dem Wechsel oder einer Rollenänderung).</summary>
+    /// <param name="killTimer">Kill-Cooldown, der bleiben soll; null = wie die Rolle ihn setzt.</param>
+    public static void RefreshButtons(PlayerControl target, float? killTimer)
+    {
+        var hud = HudManager.Instance;
+        if (hud == null) return;
+        HideExtraKillButtons(hud);
+        var role = target.Data.Role;
+        if (role != null)
+        {
+            role.Initialize(target); // Kill-/Fähigkeits-Knöpfe der Rolle (setzt auch den Kill-Cooldown)
+            if (killTimer != null) target.SetKillTimer(killTimer.Value);
+        }
+        else
+        {
+            hud.SetHudActive(true);
+        }
+        if (hud.ShadowQuad != null) hud.ShadowQuad.gameObject.SetActive(!target.Data.IsDead);
     }
 
     public static void Next()

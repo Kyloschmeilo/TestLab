@@ -23,7 +23,9 @@ Nur **du** brauchst TestLab. In Online-Spielen tut die Mod nichts.
 4. In der Runde: im Fenster bei einem Spieler **„Steuern“** (oder **F2** = nächster Spieler). Du bist jetzt dieser
    Spieler – mit seiner Rolle, seinen Knöpfen (Kill, Vent, Mod-Fähigkeiten), seinen Aufgaben und seiner Sicht.
    **F3** bringt dich zu deinem eigenen Spieler zurück.
-5. Meeting: alle, die du gerade nicht steuerst, stimmen automatisch ab.
+5. Andere Rolle testen: **„Rolle ändern …“** im Fenster – jede Spiel-Rolle (Crew und Impostor) und jede fertige
+   SpecialRoles-Rolle, dazu Flash an/aus. Gilt für den Spieler, den du gerade steuerst, sofort mitten in der Runde.
+6. Meeting: alle, die du gerade nicht steuerst, stimmen automatisch ab.
 
 Nach der Runde sind die Bots wieder in der Lobby.
 
@@ -41,9 +43,11 @@ Nach der Runde sind die Bots wieder in der Lobby.
 „Sofort starten“ (kein Countdown).
 
 **Runde:** alle Spieler mit Rolle (auch der SpecialRoles-Rolle) und je **Steuern / Holen / Töten**; dazu **Meeting**,
-**Crew gewinnt / Impostor gewinnen**, „Kein automatisches Spielende“ und wie Bots abstimmen (**Skip / Zufall / Keine**).
+**Crew gewinnt / Impostor gewinnen**, „Kein automatisches Spielende“, **Rolle ändern** und wie Bots abstimmen
+(**Skip / Zufall / Keine**). ◀/▶ schiebt das Fenster auf die andere Seite.
 
-Klicks auf das Fenster gehen auch ans Spiel darunter – wer mit der Maus läuft, steuert besser mit den Tasten.
+Rolle ändern: wird der letzte Impostor zur Crew (oder gibt es so viele Impostor wie Crew), beendet das Spiel die Runde –
+vorher „Kein automatisches Spielende“ anhaken.
 
 ## Mit anderen Mods
 
@@ -62,7 +66,7 @@ Klicks auf das Fenster gehen auch ans Spiel darunter – wer mit der Maus läuft
 
 `BepInEx/config/de.spielenetzwerk.testlab.cfg` (nur bei geschlossenem Spiel ändern; das meiste geht auch im Fenster):
 `[Bots] AuffuellenBis`, `Behalten`, `Abstimmung` · `[Lobby] SofortStarten` · `[Spiel] KeinAutomatischesEnde` ·
-`[CrewStats] TestrundenNichtSenden` · `[Fenster] Anzeigen`.
+`[CrewStats] TestrundenNichtSenden` · `[Fenster] Anzeigen`, `Links`.
 
 ## Bauen
 

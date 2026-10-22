@@ -26,11 +26,17 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Host („Timeout while waiting for other player data“, im Spiel „You disconnected from the host“) – so in 0.1.0 passiert.
 - `Game/Control.cs` – Spieler wechseln (Licht, Kamera, `Role.Initialize` für Knöpfe, Kill-Cooldown bleibt), Kill-Knopf-
   Kopien anderer Mods ausblenden, beim Rundenende (`OnGameEnd`/`ExitGame`-Prefix) IDs zurück. Nicht im Meeting.
+- `Game/RoleSwitch.cs` – „Rolle ändern“ (gesteuerter Spieler, mitten in der Runde): Spiel-Rolle per
+  `RoleManager.Instance.SetRole` (wie bei der Rollenvergabe), **nicht** `RpcSetRole` – dessen `CoSetRole` zählt
+  Rollen-Statistik im Profil und startet ggf. das Intro (`HudManager.CoShowIntro`). Danach `RecomputeTaskCounts` und
+  `Control.RefreshButtons`. SpecialRoles-Rolle per `ModInfo.SetSpecialRole` → `RoleState.Apply(RoleSync)` (Reflection,
+  nur lokal, nicht übers Netz); Mod-Rollen setzen die Spiel-Rolle auf Crewmate/Impostor (nur darauf vergibt SpecialRoles).
 - `Game/BotVotes.cs` – im Meeting `MeetingHud.CmdCastVote` für alle außer dem gesteuerten Spieler; abgelehnter Skip
   (CrewStats-Hausregel) → zufälliger Spieler.
 - `Game/Actions.cs` (Töten = `RpcMurderPlayer` auf sich selbst, Holen = `RpcSnapTo`, Meeting = `ReportDeadBody(null)`,
   Ende = `RpcEndGame`), `Game/Patches.cs` (Sofortstart, kein automatisches Ende, Rundenende),
-  `Game/ModInfo.cs` (SpecialRoles-Rolle per Reflection: `SpecialRoles.Game.RoleState.Get/Has`, `Core.RoleCatalog.Get`).
+  `Game/ModInfo.cs` (SpecialRoles-Rolle per Reflection: `SpecialRoles.Game.RoleState.Get/Has/Apply/Settings`,
+  `Core.RoleCatalog.Get/All`, `Core.RoleSync`, `Core.Assignment` – **benennt SpecialRoles das um, hier mitziehen**).
 - `Ui/TestLabWindow.cs` – IMGUI-Fenster (MonoBehaviour per `AddComponent`). **Im Spiel ist IMGUI teilweise
   weggekürzt**: vorhanden sind u.a. `GUILayout.Label/Button/Toggle/Space/BeginHorizontal/BeginVertical/BeginScrollView/
   Window/Width/Height`, `GUI.Label/Box/contentColor/matrix`; es fehlen z.B. `TextField`, Slider, `GUI.DragWindow`,
@@ -72,6 +78,10 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Hintergrund: `GUILayout.BeginVertical(GUIContent, style)` um den ganzen Inhalt, `style.normal.background` = eigene
   1×1-Textur (`HideAndDontSave`). Ein `GUI.Box` vor dem Fenster blieb unsichtbar (vermutlich, weil `GUILayout.Window`
   im Layout-Durchgang nur die übergebene Höhe zurückgibt – der Kasten wäre dann 10 px hoch).
+- **0.1.3** (22.10.2026, gebaut, **noch nicht im Spiel getestet**): „Rolle ändern …“ im Fenster (Kilians Wunsch:
+  „meine Rolle mitten im Test changen“). Reflection gegen SpecialRoles-Core offline geprüft (Assignment/RoleSync bauen,
+  Apply, Encode/Decode). Unklar bis zum Test: ob `RoleManager.SetRole` mitten in der Runde alle Knöpfe richtig setzt
+  (Crew ↔ Impostor: Kill/Sabotage/Vent, Aufgabenliste „Fake Tasks“), Namensfarben der Impostor (setzt das Spiel im Intro).
 - Computer-Steuerung: Among Us über Steam starten (Bibliothek → Spielen), **nicht** per `open_application` auf die
   `Among Us.exe` – das startet eine zweite Instanz („Another instance is already running“). Logs:
   `BepInEx/LogOutput.log` und `%USERPROFILE%\AppData\LocalLow\Innersloth\Among Us\Player.log` (Unity-Log mit den

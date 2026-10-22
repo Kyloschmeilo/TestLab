@@ -40,6 +40,13 @@ public class TestLabWindow : MonoBehaviour
     private bool _game;
     private bool _meeting;
     private string _controlled = "";
+    private byte _controlledId;
+    private RoleTypes _controlledRole;
+    private byte _controlledModRole;
+    private bool _controlledFlash;
+    private bool _controlledDead;
+    private IReadOnlyList<ModInfo.ModRole> _modRoles = Array.Empty<ModInfo.ModRole>();
+    private bool _rolePicker; // Rollen-Auswahl aufgeklappt
 
     private GUI.WindowFunction? _draw;
     private static Rect _shown; // zuletzt gezeichnetes Fenster in Bildschirm-Pixeln (leer = keins)
@@ -79,13 +86,22 @@ public class TestLabWindow : MonoBehaviour
         {
             var local = PlayerControl.LocalPlayer;
             _controlled = local != null && local.Data != null ? local.Data.PlayerName : "";
+            if (local != null && local.Data != null)
+            {
+                _controlledId = local.PlayerId;
+                _controlledRole = local.Data.RoleType;
+                _controlledModRole = ModInfo.SpecialRoleId(local.PlayerId);
+                _controlledFlash = ModInfo.HasFlash(local.PlayerId);
+                _controlledDead = local.Data.IsDead;
+            }
+            _modRoles = ModInfo.CanSetRoles ? ModInfo.Roles : Array.Empty<ModInfo.ModRole>();
             foreach (var player in Players.All().Where(Players.IsPresent).OrderBy(p => p.PlayerId))
             {
                 var data = player.Data;
                 var role = "";
                 if (_game)
                 {
-                    role = RoleName(data.RoleType);
+                    role = RoleSwitch.Name(data.RoleType);
                     var (special, flash) = ModInfo.SpecialRole(player.PlayerId);
                     // „Crewmate · Sheriff“ → „Sheriff“; Spiel-Rollen mit eigener Fähigkeit bleiben stehen
                     if (special.Length > 0)
@@ -228,6 +244,13 @@ public class TestLabWindow : MonoBehaviour
 
         Toggle(Settings.NoAutoEnd.Value, "Kein automatisches Spielende", v => Settings.NoAutoEnd.Value = v);
 
+        if (!_meeting)
+        {
+            if (Button(_rolePicker ? "Rollen-Auswahl schließen" : $"Rolle ändern ({_controlled}) …"))
+                _clicks.Enqueue(() => _rolePicker = !_rolePicker);
+            if (_rolePicker) DrawRolePicker();
+        }
+
         GUILayout.BeginHorizontal(Options());
         Label("Bots stimmen:");
         foreach (var mode in new[] { VoteMode.Skip, VoteMode.Zufall, VoteMode.Keine })
@@ -237,6 +260,50 @@ public class TestLabWindow : MonoBehaviour
         }
         GUILayout.EndHorizontal();
     }
+
+    /// <summary>Rolle des gesteuerten Spielers wechseln (andere Spieler: erst „Steuern“).</summary>
+    private void DrawRolePicker()
+    {
+        if (_controlledDead)
+        {
+            ColoredLabel($"{_controlled} ist tot – Tote behalten ihre Geister-Rolle.", Gray);
+            return;
+        }
+        var id = _controlledId;
+        ButtonGrid("Crew", RoleSwitch.CrewRoles.Select(role => (
+            Mark(RoleSwitch.Name(role), role == _controlledRole && _controlledModRole == 0),
+            (Action)(() => WithPlayer(id, p => RoleSwitch.SetGameRole(p, role))))).ToList());
+        ButtonGrid("Impostor", RoleSwitch.ImpostorRoles.Select(role => (
+            Mark(RoleSwitch.Name(role), role == _controlledRole && _controlledModRole == 0),
+            (Action)(() => WithPlayer(id, p => RoleSwitch.SetGameRole(p, role))))).ToList());
+        if (_modRoles.Count > 0)
+        {
+            var buttons = _modRoles.Select(role => (
+                Mark(role.Name, role.Id == _controlledModRole),
+                (Action)(() => WithPlayer(id, p => RoleSwitch.SetModRole(p, role))))).ToList();
+            buttons.Add((_controlledFlash ? "Flash: an" : "Flash: aus", () => WithPlayer(id, RoleSwitch.ToggleFlash)));
+            ButtonGrid("SpecialRoles", buttons);
+        }
+        ColoredLabel("Gilt für den Spieler, den du gerade steuerst – für andere erst „Steuern“.", Gray);
+    }
+
+    /// <summary>Knöpfe in Reihen zu vier, links eine Beschriftung (nur in der ersten Reihe).</summary>
+    private void ButtonGrid(string label, IReadOnlyList<(string Text, Action Click)> buttons)
+    {
+        for (var start = 0; start < buttons.Count; start += 4)
+        {
+            GUILayout.BeginHorizontal(Options());
+            ColoredLabel(start == 0 ? label : "", Gray, 74f, _noWrap);
+            for (var i = start; i < Math.Min(start + 4, buttons.Count); i++)
+            {
+                var click = buttons[i].Click;
+                if (Button(buttons[i].Text, 100f)) _clicks.Enqueue(click);
+            }
+            GUILayout.EndHorizontal();
+        }
+    }
+
+    private static string Mark(string text, bool current) => current ? $"[{text}]" : text;
 
     private void DrawPlayers()
     {
@@ -271,15 +338,6 @@ public class TestLabWindow : MonoBehaviour
         var player = Players.ById(id);
         if (player != null) action(player);
     }
-
-    private static string RoleName(RoleTypes role) => role switch
-    {
-        RoleTypes.CrewmateGhost => "Geist",
-        RoleTypes.ImpostorGhost => "Geist (Impostor)",
-        RoleTypes.GuardianAngel => "Guardian Angel",
-        RoleTypes.SpiritGuide => "Influencer",
-        _ => role.ToString(),
-    };
 
     private static Color PlayerColor(int colorId)
     {
