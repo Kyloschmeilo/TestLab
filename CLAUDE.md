@@ -99,9 +99,12 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Tod“). Kill-/Fähigkeits-Cooldowns laufen nur beim gesteuerten Spieler. SpecialRoles-Knöpfe sind bei Spielern mit
   Haustier (Kylo) meist unsichtbar (SpecialRoles-Fehler, Pet- statt Use-Knopf) → Bots ohne Haustier nehmen oder neben
   etwas Benutzbarem stehen. Flash gemessen ca. 20 % schneller.
-  **Offene TestLab-Fehler:** (1) „Rolle ändern“ wirft NullReferenceException in `ImpostorRole.Deinitialize`, wenn der
-  Spieler eine reparierte Sabotage-Aufgabe hatte (zerstörtes Objekt in `myTasks`) → vor `RoleManager.SetRole`
-  null-Einträge aus `myTasks` entfernen; (2) wechselt man von Kylo zu einem Bot, springt Kylo an eine ältere Position
-  zurück; (3) „Holen“ geht nur, solange man Kylo steuert.
+  Fehler dabei: (1) „Rolle ändern“ warf NullReferenceException in `ImpostorRole.Deinitialize`, wenn der Spieler eine
+  reparierte Sabotage-Aufgabe hatte (zerstörtes Objekt in `myTasks`); (2) wechselte man von Kylo zu einem Bot, sprang
+  Kylo an eine ältere Position zurück; (3) „Holen“ schien nur zu gehen, solange man Kylo steuert (Ursache unklar).
+- **0.1.4** (22.10.2026, gebaut, **noch nicht im Spiel getestet**): zu (1) `RoleSwitch.RemoveDeadTasks` vor `SetRole`;
+  zu (2) nach dem Umstellen der Client-ID nochmal `old.NetTransform.SnapTo(pos)`: `SnapTo`/`ClearPositionQueues` leeren
+  nur die Warteschlange der aktuellen Rolle (Besitzer `+72`, sonst Empfang `+80`, laut ISIL-Dump), `FixedUpdate` als
+  Nicht-Besitzer läuft die Empfangs-Warteschlange ab. (3) im Spiel nochmal prüfen.
 - Noch nicht getestet: Abstimmung „Zufall“, Aufgaben der Bots beim Steuern.
 - Ideen: Bots laufen lassen (Wegpunkte), Aufgaben per Knopf erledigen, Rollen vor dem Start festlegen (nur lokal!).

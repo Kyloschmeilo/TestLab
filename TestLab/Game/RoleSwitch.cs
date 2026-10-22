@@ -89,10 +89,24 @@ internal static class RoleSwitch
 
     private static void Apply(PlayerControl player, RoleTypes role)
     {
+        RemoveDeadTasks(player);
         RoleManager.Instance.SetRole(player, role);
         // Aufgaben von Impostorn zählen nicht für den Crew-Sieg
         Safe.Run("Aufgaben neu zählen", () => GameData.Instance?.RecomputeTaskCounts());
         RefreshLocal(player);
+    }
+
+    /// <summary>
+    /// Reparierte Sabotage-Aufgaben bleiben als zerstörtes Objekt in myTasks stehen. Das Spiel selbst stört das nicht,
+    /// aber ImpostorRole.Deinitialize (in SetRole) läuft dann in eine NullReferenceException.
+    /// </summary>
+    private static void RemoveDeadTasks(PlayerControl player)
+    {
+        var tasks = player.myTasks;
+        if (tasks == null) return;
+        for (var i = tasks.Count - 1; i >= 0; i--)
+            if (tasks[i] == null)
+                tasks.RemoveAt(i);
     }
 
     private static void RefreshLocal(PlayerControl player)

@@ -57,9 +57,10 @@ internal static class Control
 
         // Alten Spieler dort stehen lassen, wo er ist (sonst läuft er zur letzten Netzwerk-Position zurück)
         var light = old.lightSource;
+        Vector2 oldPosition = old.transform.position;
         Safe.Run("alten Spieler anhalten", () =>
         {
-            old.NetTransform.RpcSnapTo(old.transform.position);
+            old.NetTransform.RpcSnapTo(oldPosition);
             old.moveable = false;
             ResetName(old);
         });
@@ -68,6 +69,10 @@ internal static class Control
         PlayerControl.LocalPlayer = target;
         client.ClientId = target.OwnerId;
         client.HostId = target.OwnerId;
+
+        // SnapTo leert nur die Positions-Warteschlange der aktuellen Rolle (Besitzer oder nicht). Als Besitzer blieb die
+        // Empfangs-Warteschlange stehen, und der alte Spieler sprang zu einer alten Position zurück (vor allem du selbst).
+        Safe.Run("alten Spieler festhalten", () => old.NetTransform.SnapTo(oldPosition));
 
         target.lightSource = light;
         target.moveable = true;
