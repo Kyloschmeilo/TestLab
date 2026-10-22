@@ -93,6 +93,15 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   `Among Us.exe` – das startet eine zweite Instanz („Another instance is already running“). Logs:
   `BepInEx/LogOutput.log` und `%USERPROFILE%\AppData\LocalLow\Innersloth\Among Us\Player.log` (Unity-Log mit den
   Trennungsgründen). Die neue DLL lässt sich nur bei geschlossenem Spiel ersetzen.
-- Noch nicht getestet: Flash-Tempo (Nachtsicht bei Licht-Sabotage klappt), Abstimmung „Zufall“, Aufgaben der Bots beim
-  Steuern.
+- **SpecialRoles 0.2.0 komplett mit TestLab getestet** (22.10.2026, 3 Runden, Ergebnis im Projektordner
+  `rollen-mod/testlab-test-0.2.0.md`). Erkenntnisse fürs Testen: erst alle Rollen setzen, dann testen – „Rolle ändern“
+  setzt den ganzen Rundenzustand von SpecialRoles zurück (`Round.NewGame`: Cooldowns, Schilde, Fallen, „Rolle vor dem
+  Tod“). Kill-/Fähigkeits-Cooldowns laufen nur beim gesteuerten Spieler. SpecialRoles-Knöpfe sind bei Spielern mit
+  Haustier (Kylo) meist unsichtbar (SpecialRoles-Fehler, Pet- statt Use-Knopf) → Bots ohne Haustier nehmen oder neben
+  etwas Benutzbarem stehen. Flash gemessen ca. 20 % schneller.
+  **Offene TestLab-Fehler:** (1) „Rolle ändern“ wirft NullReferenceException in `ImpostorRole.Deinitialize`, wenn der
+  Spieler eine reparierte Sabotage-Aufgabe hatte (zerstörtes Objekt in `myTasks`) → vor `RoleManager.SetRole`
+  null-Einträge aus `myTasks` entfernen; (2) wechselt man von Kylo zu einem Bot, springt Kylo an eine ältere Position
+  zurück; (3) „Holen“ geht nur, solange man Kylo steuert.
+- Noch nicht getestet: Abstimmung „Zufall“, Aufgaben der Bots beim Steuern.
 - Ideen: Bots laufen lassen (Wegpunkte), Aufgaben per Knopf erledigen, Rollen vor dem Start festlegen (nur lokal!).
