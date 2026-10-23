@@ -109,5 +109,7 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Sabotage (Kylo Impostor) ohne Fehler im Log, kein Zurückspringen beim Wechsel Bot → Kylo, (3) „Holen“ beim Steuern
   eines Bots holt zum Bot. Tipp: das Claude-Fenster schiebt sich ab und zu vor das Spiel und nimmt den Tastatur-Fokus
   (Tasten gehen dann ins Leere) → vorher ins Spiel klicken.
+- **1.0.0** (23.10.2026, normales Release auf GitHub, kein Pre-Release; Kilian: „ja“ auf „TestLab auch 1.0?“) = 0.1.4.
+  0.1.1–0.1.4 wurden nie einzeln veröffentlicht. Kein Auto-Update (nur Kilian nutzt TestLab) → neue Version per Installer.
 - Noch nicht getestet: Abstimmung „Zufall“, Aufgaben der Bots beim Steuern.
 - Ideen: Bots laufen lassen (Wegpunkte), Aufgaben per Knopf erledigen, Rollen vor dem Start festlegen (nur lokal!).

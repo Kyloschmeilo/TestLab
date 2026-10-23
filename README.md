@@ -4,7 +4,7 @@ Eine BepInEx-Mod für **Among Us auf Steam (64-Bit)**, mit der du andere Mods (z
 ohne Mitspieler zu organisieren: Sie füllt eine **lokale Lobby mit Bots**, du kannst **jeden Spieler steuern** und die
 Bots **stimmen in Meetings ab**. Praktisch ein kleiner Testserver auf deinem PC.
 
-> **Stand 0.1.0:** erste Testversion, noch nicht im echten Spiel gelaufen.
+> **Stand 1.0.0:** im echten Spiel mit SpecialRoles (alle 30 Rollen) und CrewStats geprüft.
 
 ## Installieren
 
