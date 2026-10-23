@@ -102,9 +102,12 @@ Mods Kyloschmeilo/CrewStats und Kyloschmeilo/SpecialRoles). Kommunikation mit de
   Fehler dabei: (1) „Rolle ändern“ warf NullReferenceException in `ImpostorRole.Deinitialize`, wenn der Spieler eine
   reparierte Sabotage-Aufgabe hatte (zerstörtes Objekt in `myTasks`); (2) wechselte man von Kylo zu einem Bot, sprang
   Kylo an eine ältere Position zurück; (3) „Holen“ schien nur zu gehen, solange man Kylo steuert (Ursache unklar).
-- **0.1.4** (22.10.2026, gebaut, **noch nicht im Spiel getestet**): zu (1) `RoleSwitch.RemoveDeadTasks` vor `SetRole`;
+- **0.1.4** (22.10.2026, am 23.10.2026 im Spiel bestätigt, nicht released): zu (1) `RoleSwitch.RemoveDeadTasks` vor `SetRole`;
   zu (2) nach dem Umstellen der Client-ID nochmal `old.NetTransform.SnapTo(pos)`: `SnapTo`/`ClearPositionQueues` leeren
   nur die Warteschlange der aktuellen Rolle (Besitzer `+72`, sonst Empfang `+80`, laut ISIL-Dump), `FixedUpdate` als
-  Nicht-Besitzer läuft die Empfangs-Warteschlange ab. (3) im Spiel nochmal prüfen.
+  Nicht-Besitzer läuft die Empfangs-Warteschlange ab. Bestätigt: „Rolle ändern“ nach einer von einem Bot reparierten
+  Sabotage (Kylo Impostor) ohne Fehler im Log, kein Zurückspringen beim Wechsel Bot → Kylo, (3) „Holen“ beim Steuern
+  eines Bots holt zum Bot. Tipp: das Claude-Fenster schiebt sich ab und zu vor das Spiel und nimmt den Tastatur-Fokus
+  (Tasten gehen dann ins Leere) → vorher ins Spiel klicken.
 - Noch nicht getestet: Abstimmung „Zufall“, Aufgaben der Bots beim Steuern.
 - Ideen: Bots laufen lassen (Wegpunkte), Aufgaben per Knopf erledigen, Rollen vor dem Start festlegen (nur lokal!).
